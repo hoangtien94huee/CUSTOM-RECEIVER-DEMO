@@ -1,0 +1,50 @@
+services:
+  sbt-builder:
+    image: sbtscala/scala-sbt:eclipse-temurin-jammy-17.0.5_8_1.8.2_2.12.17
+    volumes:
+      - ../:/workspace
+    working_dir: /workspace
+    command: sbt package
+    networks:
+      - spark-network
+
+  spark-master:
+    image: apache/spark:v3.3.0
+    user: "0:0"  # Run as root to avoid permission issues
+    ports:
+      - "8080:8080"  # Spark Master UI
+      - "7077:7077"  # Spark Master RPC port
+    environment:
+      - SPARK_MODE=master
+      - SPARK_MASTER_HOST=spark-master
+    volumes:
+      - ../target:/opt/spark/work-dir/target  # Mount JAR files to Spark
+      - spark-master-work:/opt/spark/work
+    networks:
+      - spark-network
+    depends_on:
+      - sbt-builder
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+
+  spark-worker:
+    image: apache/spark:v3.3.0
+    user: "0:0"  # Run as root to avoid permission issues
+    ports:
+      - "8081:8081"  # Spark Worker UI
+    environment:
+      - SPARK_MASTER_URL=spark://spark-master:7077
+    volumes:
+      - spark-worker-work:/opt/spark/work
+    networks:
+      - spark-network
+    depends_on:
+      - spark-master
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+
+networks:
+  spark-network:
+    driver: bridge
+
+volumes:
+  spark-master-work:
+  spark-worker-work:
