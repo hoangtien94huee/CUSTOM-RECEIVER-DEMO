@@ -17,9 +17,7 @@ object SparkStreamingApp {
     Logger.getLogger("org.eclipse.jetty").setLevel(Level.OFF)
     Logger.getRootLogger().setLevel(Level.OFF)
     
-    // Also set Spark context log level
-    val sparkContext = org.apache.spark.SparkContext.getOrCreate()
-    sparkContext.setLogLevel("OFF")
+
     
     // Create a Spark configuration object
     val conf = new SparkConf()
