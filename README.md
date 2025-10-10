@@ -32,7 +32,6 @@ CUSTOM-RECEIVER-DEMO
 │   └── scala-2.12
 │       └── spark-streaming-custom-receiver_2.12-0.1.0.jar
 ├── build.sbt
-├── CASE_STUDY.md
 ├── image.png
 └── README.md
 ```
