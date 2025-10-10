@@ -5,15 +5,18 @@ Dự án này minh họa cách tạo một ứng dụng Spark Streaming với cu
 ## Cấu trúc Dự án
 
 ```
-spark-streaming-custom-receiver
+CUSTOM-RECEIVER-DEMO
 ├── src
 │   └── main
 │       ├── scala
 │       │   └── com
 │       │       └── streaming
-│       │           └── demo
-│       │               ├── CustomAPIReceiver.scala
-│       │               └── SparkStreamingApp.scala
+│       │           ├── demo
+│       │           │   ├── CustomAPIReceiver.scala
+│       │           │   └── SparkStreamingApp.scala
+│       │           └── exercise
+│       │               ├── EthereumReceiver.scala
+│       │               └── EthereumStreamingApp.scala
 │       └── resources
 │           └── log4j.properties
 ├── project
@@ -25,9 +28,12 @@ spark-streaming-custom-receiver
 │   │   └── Dockerfile
 │   └── spark-worker
 │       └── Dockerfile
+├── target
+│   └── scala-2.12
+│       └── spark-streaming-custom-receiver_2.12-0.1.0.jar
 ├── build.sbt
-├── .dockerignore
-├── .gitignore
+├── CASE_STUDY.md
+├── image.png
 └── README.md
 ```
 
@@ -36,7 +42,7 @@ spark-streaming-custom-receiver
 ### 1. Di chuyển đến Thư mục Dự án
 
 ```powershell
-cd "c:\HK1_NAM4\BigDataRealTime\GiuaKy\custom-reciver-demo\spark-streaming-custom-receiver"
+cd "D:\4th\StreamingBigdata\CUSTOM-RECEIVER-DEMO"
 ```
 
 ### 2. Thiết lập Spark Cluster và Build JAR File
@@ -210,18 +216,52 @@ netstat -ano | findstr :8080
 
 ## Tổng quan về Code
 
-### CustomAPIReceiver.scala
+Dự án bao gồm hai package chính:
 
-File này định nghĩa class `CustomAPIReceiver`, kế thừa từ `Receiver[String]`. Nó implement method `onStart()` để tạo thread lấy dữ liệu từ REST API công khai mỗi 5 giây và đẩy kết quả vào Spark sử dụng method `store()`. Method `onStop()` dừng thread.
+### Package `com.streaming.demo` - Bitcoin Rate Streaming
 
-### SparkStreamingApp.scala
+#### CustomAPIReceiver.scala
+File này định nghĩa class `CustomAPIReceiver`, kế thừa từ `Receiver[String]`. Nó implement method `onStart()` để tạo thread lấy dữ liệu từ Coinbase API công khai mỗi 5 giây và đẩy kết quả vào Spark sử dụng method `store()`. Method `onStop()` dừng thread.
 
+#### SparkStreamingApp.scala
 File này chứa object `SparkStreamingApp` với main method. Nó khởi tạo `StreamingContext` với batch interval 10 giây, đọc dữ liệu từ `CustomAPIReceiver`, parse JSON để lấy tỷ giá BTC/USD và BTC/VND, và hiển thị kết quả theo format đẹp mắt.
 
-### log4j.properties
+### Package `com.streaming.exercise` - Ethereum Data Streaming
 
+#### EthereumReceiver.scala
+Tương tự `CustomAPIReceiver`, file này định nghĩa custom receiver để lấy dữ liệu Ethereum từ API công khai, xử lý streaming dữ liệu cryptocurrency Ethereum.
+
+#### EthereumStreamingApp.scala
+Ứng dụng streaming cho Ethereum, xử lý và hiển thị dữ liệu Ethereum real-time tương tự như Bitcoin streaming app.
+
+### Resources
+
+#### log4j.properties
 File cấu hình để giảm thiểu log verbose của Spark, chỉ hiển thị kết quả streaming chính.
+
+### Tài liệu
+
+#### CASE_STUDY.md
+Tài liệu mô tả chi tiết về case study, bao gồm bối cảnh, yêu cầu, vấn đề và giải pháp của dự án.
+
+## Chạy các ứng dụng khác nhau
+
+Dự án bao gồm hai ứng dụng streaming có thể chạy:
+
+### Bitcoin Rate Streaming (Demo)
+```powershell
+docker exec -it docker-spark-master-1 /opt/spark/bin/spark-submit --master spark://spark-master:7077 --class com.streaming.demo.SparkStreamingApp /opt/spark/app.jar
+```
+
+### Ethereum Data Streaming (Exercise)
+```powershell
+docker exec -it docker-spark-master-1 /opt/spark/bin/spark-submit --master spark://spark-master:7077 --class com.streaming.exercise.EthereumStreamingApp /opt/spark/app.jar
+```
 
 ## Kết luận
 
-Dự án này cung cấp một ví dụ hoàn chỉnh về cách tạo ứng dụng Spark Streaming với custom receiver, chạy trên Spark cluster được Docker hóa, và theo dõi việc thực thi. Bạn có thể mở rộng dự án này bằng cách thêm nhiều tính năng hoặc tích hợp thêm các nguồn dữ liệu khác theo nhu cầu.# CUSTOM-RECEIVER-DEMO
+Dự án này cung cấp một ví dụ hoàn chỉnh về cách tạo ứng dụng Spark Streaming với custom receiver, chạy trên Spark cluster được Docker hóa, và theo dõi việc thực thi. Dự án bao gồm hai ví dụ thực tế: Bitcoin rate streaming và Ethereum data streaming. Bạn có thể mở rộng dự án này bằng cách thêm nhiều tính năng hoặc tích hợp thêm các nguồn dữ liệu khác theo nhu cầu.
+
+---
+
+**Xem thêm:** [CASE_STUDY.md](CASE_STUDY.md) để hiểu chi tiết về bối cảnh, yêu cầu và giải pháp kỹ thuật của dự án.
