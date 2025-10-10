@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatter
 object SparkStreamingApp {
   def main(args: Array[String]): Unit = {
 
-    // Completely disable Spark logging to show only our output
+    // Tắt hoàn toàn log của Spark để chỉ hiển thị kết quả của chương trình chúng ta
     import org.apache.log4j.{Level, Logger}
     Logger.getLogger("org").setLevel(Level.OFF)
     Logger.getLogger("akka").setLevel(Level.OFF)
@@ -18,36 +18,35 @@ object SparkStreamingApp {
     Logger.getRootLogger().setLevel(Level.OFF)
     
 
-    
-    // Create a Spark configuration object
+    // Tạo một đối tượng cấu hình cho Spark
     val conf = new SparkConf()
-      .setAppName("Custom API Streaming Application") // Set the application name
-      .setMaster("spark://spark-master:7077") // Set the master URL to connect to the Spark cluster
+      .setAppName("Ứng dụng Streaming sử dụng Custom API") // Đặt tên cho ứng dụng
+      .setMaster("spark://spark-master:7077") // Đặt địa chỉ master để kết nối đến cluster Spark
 
-    // Create a StreamingContext with a batch interval of 10 seconds
+    // Tạo một StreamingContext với khoảng thời gian xử lý mỗi batch là 10 giây
     val ssc = new StreamingContext(conf, Seconds(10))
 
-    // Create a DStream using the CustomAPIReceiver - streaming Bitcoin exchange rates from Coinbase
+    // Tạo một DStream sử dụng CustomAPIReceiver – stream dữ liệu tỷ giá Bitcoin từ Coinbase API
     val apiStream = ssc.receiverStream(new CustomAPIReceiver("https://api.coinbase.com/v2/exchange-rates?currency=BTC", 5))
 
-    // Process the received data
+    // Xử lý dữ liệu nhận được từ stream
     apiStream.foreachRDD { rdd =>
       if (!rdd.isEmpty()) {
-        // Get current timestamp first
+        // Lấy timestamp hiện tại
         val currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
         
-        // Collect all data first to avoid interleaved logs
+        // Thu thập toàn bộ dữ liệu để tránh log bị xen kẽ
         val collectedData = rdd.collect()
         
-        // Print time header
+        // In tiêu đề thời gian
         println("\n-------------------------------------------")
-        println(s"Time: $currentTime")
+        println(s"Thời gian: $currentTime")
         println("-------------------------------------------")
         
-        // Process each JSON response
+        // Xử lý từng chuỗi JSON nhận được
         collectedData.foreach { jsonData =>
           try {
-            // Parse JSON to extract USD and VND rates
+            // Phân tích JSON để trích xuất tỷ giá USD và VND
             val usdRate = extractRate(jsonData, "USD")
             val vndRate = extractRate(jsonData, "VND")
             
@@ -56,22 +55,22 @@ object SparkStreamingApp {
             }
           } catch {
             case e: Exception => 
-              println(s"Error parsing data: ${e.getMessage}")
+              println(s"Lỗi khi phân tích dữ liệu: ${e.getMessage}")
           }
         }
         
-        // Flush output to ensure it appears together
+        // Xả bộ đệm để đảm bảo tất cả nội dung được in ra cùng lúc
         System.out.flush()
       }
     }
 
-    // Start the streaming context
+    // Khởi động Spark Streaming
     ssc.start()
-    // Await termination of the streaming context
+    // Giữ chương trình chạy cho đến khi có lệnh dừng
     ssc.awaitTermination()
   }
   
-  // Helper function to extract exchange rate from JSON string
+  // Hàm phụ để trích xuất tỷ giá từ chuỗi JSON
   def extractRate(jsonString: String, currency: String): Option[Double] = {
     try {
       val pattern = s""""$currency":"([^"]+)"""".r

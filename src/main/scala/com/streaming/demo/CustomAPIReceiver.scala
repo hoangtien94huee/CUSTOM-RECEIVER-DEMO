@@ -9,41 +9,41 @@ import scala.io.Source
 import scala.util.{Failure, Success, Try}
 
 /**
- * CustomAPIReceiver is a Spark Streaming Receiver that fetches data from a public REST API.
- * It extends the Receiver class and implements the onStart and onStop methods.
+ * CustomAPIReceiver là một Spark Streaming Receiver dùng để lấy dữ liệu từ REST API công khai.
+ * Nó kế thừa lớp Receiver và triển khai các phương thức onStart và onStop.
  *
- * @param apiUrl The URL of the REST API to fetch data from.
- * @param intervalSeconds The interval in seconds to fetch data from the API.
+ * @param apiUrl Đường dẫn (URL) của REST API để lấy dữ liệu.
+ * @param intervalSeconds Khoảng thời gian (tính bằng giây) giữa các lần lấy dữ liệu từ API.
  */
 class CustomAPIReceiver(apiUrl: String, intervalSeconds: Int) extends Receiver[String](StorageLevel.MEMORY_AND_DISK_2) {
 
   @volatile private var fetchingData: Boolean = false
 
   /**
-   * Starts the receiver by creating a thread that fetches data from the API.
+   * Bắt đầu receiver bằng cách tạo một luồng (thread) để liên tục lấy dữ liệu từ API.
    */
   override def onStart(): Unit = {
     fetchingData = true
     Future {
       while (fetchingData) {
         val data = fetchDataFromAPI()
-        data.foreach(store) // Store the fetched data in Spark
-        Thread.sleep(intervalSeconds * 1000) // Wait for the specified interval
+        data.foreach(store) // Lưu dữ liệu lấy được vào Spark
+        Thread.sleep(intervalSeconds * 1000) // Chờ trong khoảng thời gian được chỉ định
       }
     }
   }
 
   /**
-   * Stops the receiver by stopping the data fetching thread.
+   * Dừng receiver bằng cách dừng luồng lấy dữ liệu.
    */
   override def onStop(): Unit = {
     fetchingData = false
   }
 
   /**
-   * Fetches data from the specified API URL.
+   * Lấy dữ liệu từ API được chỉ định.
    *
-   * @return An Option containing the fetched data as a String.
+   * @return Một Option chứa dữ liệu lấy được dưới dạng chuỗi (String).
    */
   private def fetchDataFromAPI(): Option[String] = {
     Try {
@@ -52,7 +52,7 @@ class CustomAPIReceiver(apiUrl: String, intervalSeconds: Int) extends Receiver[S
     } match {
       case Success(data) => data
       case Failure(exception) =>
-        println(s"Error fetching data: ${exception.getMessage}")
+        println(s"Lỗi khi lấy dữ liệu: ${exception.getMessage}")
         None
     }
   }
